@@ -1,7 +1,9 @@
 from mastodon import Mastodon
 
+import settings
+
 mastodon_client = Mastodon(
-    access_token="1SO7o4KMEreBixXexjgFz_kcF-WXXtTl31R4xsIo_pc",
-    api_base_url="https://mastodon.dalaomai.cn/")
+    access_token=settings.MASTODON_ACCESS_TOKEN,
+    api_base_url=settings.MASTODON_API_BASE_URL)
 
 # mastodon_client.toot("Test")
