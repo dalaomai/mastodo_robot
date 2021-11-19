@@ -1,0 +1,5 @@
+.history
+.temp
+venv/
+
+__pycache__/
