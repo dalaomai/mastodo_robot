@@ -19,7 +19,12 @@ def get_pic(url=JIANDAN_PIC_HOST):
     rsp = requests.get(url)
     if rsp.status_code != HTTPStatus.OK:
         return None
+    html = etree.HTML(rsp.text)
 
+    older_comment = html.xpath('//*[@title="Older Comments"]')[0]
+    rsp = requests.get(f"https:{older_comment.attrib['href']}")
+    if rsp.status_code != HTTPStatus.OK:
+        return None
     html = etree.HTML(rsp.text)
 
     comments = html.xpath('/html/body/div/div[2]/div[1]/div[2]/ol/li')
@@ -52,7 +57,7 @@ def get_pic(url=JIANDAN_PIC_HOST):
 
 
 def download_img(uri, fileFolder='.temp/media'):
-
+    os.makedirs(fileFolder, exist_ok=True)
     filename = urlparse(uri).path.split('/')[-1]
 
     full_filepath = os.path.join(fileFolder, filename)
@@ -84,31 +89,35 @@ def crawling_jiandan():
     global comment_latest_id
 
     while True:
-        for i in get_pic():
-            comment_id, text, imgs = i
-            text = text if text else ''
+        try:
+            for i in get_pic():
+                comment_id, text, imgs = i
+                text = text if text else ''
 
-            if comment_id <= comment_latest_id:
-                continue
+                if comment_id <= comment_latest_id:
+                    continue
 
-            img_ids = []
-            for url in imgs:
+                img_ids = []
+                for url in imgs:
+                    try:
+                        img_ids.append(media_post_to_matodon(url)['id'])
+                    except Exception:
+                        logger.exception(f'post media to matodon faile')
+                        text += f'\n{url}'
+
+                text = f'#煎蛋 #无聊图 http://jandan.net/t/{comment_id} \n{text}'
+
                 try:
-                    img_ids.append(media_post_to_matodon(url)['id'])
+                    mastodon_client.status_post(text, media_ids=img_ids)
                 except Exception:
-                    text += f'\n{url}'
+                    logger.exception(f'send toot err')
 
-            text = f'#煎蛋 #无聊图 http://jandan.net/t/{comment_id} \n{text}'
+                comment_latest_id = comment_id
+                logger.info(f'send toot success: {comment_id}')
+        except Exception:
+            logger.exception(f'err: get jandan err')
 
-            try:
-                mastodon_client.status_post(text, media_ids=img_ids)
-            except Exception:
-                logger.exception(f'send toot err')
-
-            comment_latest_id = comment_id
-            logger.info(f'send toot success: {comment_id}')
-
-        time.sleep(random.randint(20, 30))
+        time.sleep(random.randint(40, 50))
 
 
 if __name__ == "__main__":
