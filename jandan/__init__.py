@@ -51,7 +51,7 @@ def get_pic(url=JIANDAN_PIC_HOST):
     return result
 
 
-def download_img(uri, fileFolder='.temp'):
+def download_img(uri, fileFolder='.temp/media'):
 
     filename = urlparse(uri).path.split('/')[-1]
 
