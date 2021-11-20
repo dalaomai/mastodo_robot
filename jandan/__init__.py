@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 
 import requests
 from lxml import etree
+from mastodon.Mastodon import MastodonAPIError, MastodonError
 
 from mastd import mastodon_client
 from utils import logger
@@ -66,7 +67,14 @@ def download_img(uri, fileFolder='.temp'):
 
 def media_post_to_matodon(url):
     filepath = download_img(url)
-    return mastodon_client.media_post(filepath)
+    try:
+        info = mastodon_client.media_post(filepath)
+    except MastodonError as e:
+        logger.exception(f'upload {url} error')
+        raise e
+    finally:
+        os.remove(filepath)
+    return info
 
 
 comment_latest_id = -1
@@ -78,19 +86,27 @@ def crawling_jiandan():
     while True:
         for i in get_pic():
             comment_id, text, imgs = i
+            text = text if text else ''
+
             if comment_id <= comment_latest_id:
                 continue
 
             img_ids = []
             for url in imgs:
-                media_id = media_post_to_matodon(url).get('id')
-                if media_id:
-                    img_ids.append(media_id)
+                try:
+                    img_ids.append(media_post_to_matodon(url)['id'])
+                except Exception:
+                    text += f'\n{url}'
 
             text = f'#煎蛋 #无聊图 http://jandan.net/t/{comment_id} \n{text}'
-            mastodon_client.status_post(text, media_ids=img_ids)
+
+            try:
+                mastodon_client.status_post(text, media_ids=img_ids)
+            except Exception:
+                logger.exception(f'send toot err')
+
             comment_latest_id = comment_id
-            logger.info(f'send {comment_id}')
+            logger.info(f'send toot success: {comment_id}')
 
         time.sleep(random.randint(20, 30))
 
