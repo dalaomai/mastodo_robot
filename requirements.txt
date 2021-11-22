@@ -35,3 +35,4 @@ typing_extensions==4.0.0
 urllib3==1.26.7
 wcwidth==0.2.5
 zipp==3.6.0
+cos-python-sdk-v5==1.9.11
