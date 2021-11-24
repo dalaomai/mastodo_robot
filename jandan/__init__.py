@@ -1,13 +1,12 @@
 import os
 import random
 import time
-import urllib
 from http import HTTPStatus
 from urllib.parse import urlparse
 
 import requests
 from lxml import etree
-from mastodon.Mastodon import MastodonAPIError, MastodonError
+from mastodon.Mastodon import MastodonError
 
 from mastd import mastodon_client
 from utils import logger
@@ -16,18 +15,20 @@ JIANDAN_PIC_HOST = 'https://jandan.net/pic'
 
 
 def get_pic(url=JIANDAN_PIC_HOST):
+    comment_xpath = '/html/body/div/div[2]/div[1]/div[2]/ol/li'
+
     rsp = requests.get(url)
     if rsp.status_code != HTTPStatus.OK:
         return None
-    html = etree.HTML(rsp.text)
+    html_pic = etree.HTML(rsp.text)
 
-    older_comment = html.xpath('//*[@title="Older Comments"]')[0]
+    older_comment = html_pic.xpath('//*[@title="Older Comments"]')[0]
     rsp = requests.get(f"https:{older_comment.attrib['href']}")
     if rsp.status_code != HTTPStatus.OK:
         return None
-    html = etree.HTML(rsp.text)
+    html_older = etree.HTML(rsp.text)
 
-    comments = html.xpath('/html/body/div/div[2]/div[1]/div[2]/ol/li')
+    comments = html_pic.xpath(comment_xpath) + html_older.xpath(comment_xpath)
 
     result = []
     for comment in comments:
@@ -102,7 +103,7 @@ def crawling_jiandan():
                     try:
                         img_ids.append(media_post_to_matodon(url)['id'])
                     except Exception:
-                        logger.exception(f'post media to matodon faile')
+                        logger.exception('post media to matodon faile')
                         text += f'\n{url}'
 
                 text = f'#煎蛋 #无聊图 http://jandan.net/t/{comment_id} \n{text}'
@@ -110,12 +111,12 @@ def crawling_jiandan():
                 try:
                     mastodon_client.status_post(text, media_ids=img_ids)
                 except Exception:
-                    logger.exception(f'send toot err')
+                    logger.exception('send toot err')
 
                 comment_latest_id = comment_id
                 logger.info(f'send toot success: {comment_id}')
         except Exception:
-            logger.exception(f'err: get jandan err')
+            logger.exception('err: get jandan err')
 
         time.sleep(random.randint(40, 50))
 
