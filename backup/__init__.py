@@ -1,4 +1,5 @@
 import datetime
+import os
 import time
 
 import settings
@@ -17,9 +18,10 @@ def backup(data_folder, key_root='backup'):
         Bucket=settings.COS_BUCKET,
         LocalFilePath=backup_zip_file,
         Key=f'{key_root}/{zip_file_name}',
-        PartSize=50,
+        PartSize=100,
         EnableMD5=True
     )
+    os.remove(backup_zip_file)
 
 
 def backup_task():
