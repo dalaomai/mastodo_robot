@@ -8,9 +8,9 @@ from mastd import mastodon_client
 from utils import logger
 
 
-def clear_jandan_toot():
+def clear_jandan_toot(days=7):
     del_time = datetime.datetime.now().replace(tzinfo=tzutc()) - \
-        datetime.timedelta(days=7)
+        datetime.timedelta(days=days)
 
     max_id = None
     while True:
@@ -30,7 +30,7 @@ def clear_jandan_toot():
                 mastodon_client.status_delete(id)
 
 
-def clear_daily_data():
+def clear_daily_data(days=7):
     '''
     docker exec -it mastodon_web bin/tootctl statuses remove
     docker exec -it mastodon_web bin/tootctl media remove-orphans
@@ -38,7 +38,8 @@ def clear_daily_data():
     '''
     os.system('docker exec -it mastodon_web bin/tootctl statuses remove')
     os.system('docker exec -it mastodon_web bin/tootctl media remove-orphans')
-    os.system('docker exec -it mastodon_web bin/tootctl media remove --days=7')
+    os.system(
+        f'docker exec -it mastodon_web bin/tootctl media remove --days={days}')
 
 
 def clear_task():

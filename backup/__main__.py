@@ -1,10 +1,3 @@
-import settings
-from utils import cos_clinet
+from . import backup_task
 
-cos_clinet.upload_file(
-    Bucket=settings.COS_BUCKET,
-    LocalFilePath='.temp/7dd42f11ly1gwlf88k2jtg207i07i1l0.gif',
-    Key='1.gif'
-)
-
-cos_clinet.download_file()
+backup_task()
