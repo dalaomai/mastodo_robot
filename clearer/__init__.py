@@ -10,12 +10,13 @@ from utils import logger
 
 def clear_jandan_toot():
     del_time = datetime.datetime.now().replace(tzinfo=tzutc()) - \
-        datetime.timedelta(days=14)
+        datetime.timedelta(days=7)
 
     max_id = None
     while True:
         toots = mastodon_client.timeline_hashtag(
-            '煎蛋', max_id=max_id, limit=100)
+            '煎蛋', max_id=max_id, limit=40)
+        # print(toots[0]['id'])
         if not toots:
             break
 
@@ -25,6 +26,7 @@ def clear_jandan_toot():
 
             max_id = id
             if(created_at < del_time):
+                # print(f'del {id}')
                 mastodon_client.status_delete(id)
 
 
@@ -36,14 +38,14 @@ def clear_daily_data():
     '''
     os.system('docker exec -it mastodon_web bin/tootctl statuses remove')
     os.system('docker exec -it mastodon_web bin/tootctl media remove-orphans')
-    os.system('docker exec -it mastodon_web bin/tootctl media remove --days=14')
+    os.system('docker exec -it mastodon_web bin/tootctl media remove --days=7')
 
 
 def clear_task():
 
     while True:
         now_time = datetime.datetime.now()
-        if now_time.hour == 1 and (now_time.day == 1 or now_time.day == 15):
+        if now_time.hour == 1 and now_time.day % 5 == 0:
             try:
                 clear_jandan_toot()
             except Exception:
