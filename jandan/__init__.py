@@ -1,3 +1,4 @@
+import datetime
 import os
 import random
 import time
@@ -5,6 +6,7 @@ from http import HTTPStatus
 from urllib.parse import urlparse
 
 import requests
+from dateutil.tz import tzutc
 from lxml import etree
 from mastodon.Mastodon import MastodonError
 
@@ -84,6 +86,23 @@ def media_post_to_matodon(url):
 
 
 comment_latest_id = -1
+
+
+def clear_toot():
+    del_time = datetime.datetime.now().replace(tzinfo=tzutc()) - \
+        datetime.timedelta(days=7)
+
+    while True:
+        toots = mastodon_client.timeline_hashtag('煎蛋', limit=100)
+        if not toots:
+            break
+
+        for toot in toots:
+            id = toot['id']
+            created_at = toot['created_at']
+            if(created_at < del_time):
+                mastodon_client.status_delete(id)
+            print(f'del {id}')
 
 
 def crawling_jiandan():
