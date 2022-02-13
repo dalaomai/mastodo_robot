@@ -34,7 +34,7 @@ def clear_daily_data(days=7):
     '''
     docker exec -it mastodon_web bin/tootctl statuses remove
     docker exec -it mastodon_web bin/tootctl media remove-orphans
-    docker exec -it mastodon_web bin/tootctl media remove --days=14
+    docker exec -it mastodon_web bin/tootctl media remove --days=7
     '''
     os.system('docker exec -it mastodon_web bin/tootctl statuses remove')
     os.system('docker exec -it mastodon_web bin/tootctl media remove-orphans')
@@ -46,7 +46,7 @@ def clear_task():
 
     while True:
         now_time = datetime.datetime.now()
-        if now_time.hour == 1 and now_time.day % 5 == 0:
+        if now_time.hour == 1 and now_time.day % 3 == 0:
             try:
                 clear_jandan_toot()
             except Exception:
@@ -57,7 +57,7 @@ def clear_task():
             except Exception:
                 logger.exception('clear daily data err')
 
-        time.sleep(60*60)
+        time.sleep(60*20)
 
 
 if __name__ == '__main__':
